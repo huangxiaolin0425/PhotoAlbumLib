@@ -1,0 +1,6 @@
+framework module PhotoAlbumLib {
+  umbrella header "PhotoAlbumLib-umbrella.h"
+
+  export *
+  module * { export * }
+}
