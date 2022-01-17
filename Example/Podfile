@@ -1,0 +1,13 @@
+use_frameworks!
+
+platform :ios, '9.0'
+
+target 'PhotoAlbumLib_Example' do
+  pod 'PhotoAlbumLib', :path => '../'
+
+  target 'PhotoAlbumLib_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
