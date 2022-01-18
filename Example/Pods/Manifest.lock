@@ -9,7 +9,7 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  PhotoAlbumLib: cf1d459718c5e2e2facfca94595c0452dcb38a2d
+  PhotoAlbumLib: 8ef7b77f3feda404d070fa57fec3522962a33a85
 
 PODFILE CHECKSUM: a1273976cffba372d1a40654ae0f655caf28aeda
 

@@ -18,12 +18,12 @@
   "platforms": {
     "ios": "11.0"
   },
-  "source_files": "PhotoAlbumLib/Classes/**/*",
   "swift_versions": [
     "5.0",
     "5.1",
     "5.2"
   ],
+  "source_files": "PhotoAlbumLib/Classes/**/*.swift",
   "resources": "PhotoAlbumLib/Classes/*.{png,bundle}",
   "swift_version": "5.2"
 }
