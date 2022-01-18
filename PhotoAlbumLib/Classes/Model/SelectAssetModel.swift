@@ -10,8 +10,8 @@ import UIKit
 import Photos
 
 public class SelectAssetModel {
-    var asset: PHAsset?
-    var photo: UIImage?
-    var data: Data?
-    var icloud: Bool = false
+    public var asset: PHAsset?
+    public var photo: UIImage?
+    public var data: Data?
+    public var icloud: Bool = false
 }

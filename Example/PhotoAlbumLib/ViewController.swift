@@ -28,6 +28,9 @@ class ViewController: UIViewController {
         let photoConfig = PhotoConfiguration()
         photoConfig.chatConfiguration()
         photoAlbumManager.presentPhotoAlbum(controller: self, photoConfig: photoConfig) { [weak self] models, original in
+            if let item = models.first {
+                print(item.asset)
+            }
         }
     }
 }

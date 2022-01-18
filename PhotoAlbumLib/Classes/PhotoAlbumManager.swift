@@ -88,12 +88,12 @@ extension PhotoAlbumManager {
 extension PhotoAlbumManager {
     /// Fetch the image of the specified size
     @discardableResult
-    static func fetchImage(for asset: PHAsset, size: CGSize, progress: ( (CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void )? = nil, completion: @escaping ( (UIImage?, Bool) -> Void )) -> PHImageRequestID {
+    public static func fetchImage(for asset: PHAsset, size: CGSize, progress: ( (CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void )? = nil, completion: @escaping ( (UIImage?, Bool) -> Void )) -> PHImageRequestID {
         return self.fetchImage(for: asset, size: size, resizeMode: .fast, progress: progress, completion: completion)
     }
     /// Fetch the original image
     @discardableResult
-    static func fetchOriginalImage(for asset: PHAsset, progress: ( (CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void )? = nil, completion: @escaping ( (UIImage?, Bool) -> Void)) -> PHImageRequestID {
+    public static func fetchOriginalImage(for asset: PHAsset, progress: ( (CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void )? = nil, completion: @escaping ( (UIImage?, Bool) -> Void)) -> PHImageRequestID {
         return self.fetchImage(for: asset, size: PHImageManagerMaximumSize, resizeMode: .fast, progress: progress, completion: completion)
     }
     
@@ -124,7 +124,7 @@ extension PhotoAlbumManager {
     }
     /// Fetch asset data.
     @discardableResult
-    static func fetchOriginalImageData(for asset: PHAsset, isNetworkAccessAllowed: Bool = true, progress: ( (CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void )? = nil, completion: @escaping ( (Data?, [AnyHashable: Any]?, Bool) -> Void)) -> PHImageRequestID {
+    public static func fetchOriginalImageData(for asset: PHAsset, isNetworkAccessAllowed: Bool = true, progress: ( (CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void )? = nil, completion: @escaping ( (Data?, [AnyHashable: Any]?, Bool) -> Void)) -> PHImageRequestID {
         let option = PHImageRequestOptions()
         if (asset.value(forKey: "filename") as? String)?.hasSuffix("GIF") == true {
             option.version = .original
@@ -219,7 +219,7 @@ extension PhotoAlbumManager {
         }
     }
     
-    static func fetchVideo(for asset: PHAsset, progress: ( (CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void )? = nil, completion: @escaping ( (AVPlayerItem?, [AnyHashable: Any]?, Bool) -> Void )) -> PHImageRequestID {
+    public static func fetchVideo(for asset: PHAsset, progress: ( (CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void )? = nil, completion: @escaping ( (AVPlayerItem?, [AnyHashable: Any]?, Bool) -> Void )) -> PHImageRequestID {
         let option = PHVideoRequestOptions()
         option.isNetworkAccessAllowed = true
         option.progressHandler = { (pro, error, stop, info) in
@@ -248,7 +248,7 @@ extension PhotoAlbumManager {
         }
     }
     
-    static func isFetchImageError(_ error: Error?) -> Bool {
+    public static func isFetchImageError(_ error: Error?) -> Bool {
         guard let e = error as NSError? else {
             return false
         }
@@ -258,7 +258,7 @@ extension PhotoAlbumManager {
         return false
     }
     
-    static func fetchAVAsset(forVideo asset: PHAsset, completion: @escaping ( (AVAsset?, [AnyHashable: Any]?) -> Void )) -> PHImageRequestID {
+    public static func fetchAVAsset(forVideo asset: PHAsset, completion: @escaping ( (AVAsset?, [AnyHashable: Any]?) -> Void )) -> PHImageRequestID {
         let options = PHVideoRequestOptions()
         options.version = .original
         options.deliveryMode = .automatic
@@ -285,12 +285,12 @@ extension PhotoAlbumManager {
     }
     
     /// 判断asset是否为Video
-    static func isVideo(asset: PHAsset) -> Bool {
+    public static func isVideo(asset: PHAsset) -> Bool {
         return asset.mediaType == .video
     }
     
     /// 获取一组asset的fileSize
-    static func photosBytes(with models: [SelectAssetModel], completion: @escaping ( (CGFloat) -> Void )) {
+    public static func photosBytes(with models: [SelectAssetModel], completion: @escaping ( (CGFloat) -> Void )) {
         var totalSize = 0.0
         var modelCount = 0
         for model in models {
@@ -342,7 +342,7 @@ extension PhotoAlbumManager {
     }
     
     /// Save image to album.
-     static func saveImageToAlbum(image: UIImage, completion: ( (Bool, PHAsset?) -> Void )? ) {
+    public static func saveImageToAlbum(image: UIImage, completion: ( (Bool, PHAsset?) -> Void )? ) {
         let status = PHPhotoLibrary.authorizationStatus()
         
         if status == .denied || status == .restricted {
@@ -367,7 +367,7 @@ extension PhotoAlbumManager {
     }
     
     /// Save video to album.
-    static func saveVideoToAlbum(url: URL, completion: ( (Bool, PHAsset?) -> Void )? ) {
+    public static func saveVideoToAlbum(url: URL, completion: ( (Bool, PHAsset?) -> Void )? ) {
         let status = PHPhotoLibrary.authorizationStatus()
         
         if status == .denied || status == .restricted {
