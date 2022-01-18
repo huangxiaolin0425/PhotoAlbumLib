@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'PhotoAlbumLib'
-  s.version          = '0.1.0'
+  s.version          = '0.1.1'
   s.summary          = 'A short description of PhotoAlbumLib.'
 
 # This description is used to generate tags and improve search results.
@@ -30,10 +30,8 @@ TODO: Add long description of the pod here.
 
   s.ios.deployment_target = '11.0'
 
-  s.source_files = 'PhotoAlbumLib/Classes/**/*'
-
   s.swift_versions        = ['5.0', '5.1', '5.2']
-  
+  s.source_files	         = 'PhotoAlbumLib/Classes/**/*.swift'
   s.resources             = 'PhotoAlbumLib/Classes/*.{png,bundle}'
   # s.public_header_files = 'Pod/Classes/**/*.h'
   # s.frameworks = 'UIKit', 'MapKit'
