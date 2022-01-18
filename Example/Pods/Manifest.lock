@@ -1,5 +1,5 @@
 PODS:
-  - PhotoAlbumLib (0.1.0)
+  - PhotoAlbumLib (0.1.1)
 
 DEPENDENCIES:
   - PhotoAlbumLib (from `../`)
@@ -9,7 +9,7 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  PhotoAlbumLib: 013e77e45ccab01e8146499c41102dc1c1df2019
+  PhotoAlbumLib: cf1d459718c5e2e2facfca94595c0452dcb38a2d
 
 PODFILE CHECKSUM: a1273976cffba372d1a40654ae0f655caf28aeda
 
