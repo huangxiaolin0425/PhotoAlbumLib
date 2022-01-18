@@ -28,14 +28,13 @@ TODO: Add long description of the pod here.
   s.source           = { :git => 'https://github.com/huangxiaolin0425/PhotoAlbumLib.git', :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.ios.deployment_target = '9.0'
+  s.ios.deployment_target = '11.0'
 
   s.source_files = 'PhotoAlbumLib/Classes/**/*'
-  
-  # s.resource_bundles = {
-  #   'PhotoAlbumLib' => ['PhotoAlbumLib/Assets/*.png']
-  # }
 
+  s.swift_versions        = ['5.0', '5.1', '5.2']
+  
+  s.resources             = 'PhotoAlbumLib/Classes/*.{png,bundle}'
   # s.public_header_files = 'Pod/Classes/**/*.h'
   # s.frameworks = 'UIKit', 'MapKit'
   # s.dependency 'AFNetworking', '~> 2.3'

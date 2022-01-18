@@ -16,7 +16,14 @@
     "tag": "0.1.0"
   },
   "platforms": {
-    "ios": "9.0"
+    "ios": "11.0"
   },
-  "source_files": "PhotoAlbumLib/Classes/**/*"
+  "source_files": "PhotoAlbumLib/Classes/**/*",
+  "swift_versions": [
+    "5.0",
+    "5.1",
+    "5.2"
+  ],
+  "resources": "PhotoAlbumLib/Classes/*.{png,bundle}",
+  "swift_version": "5.2"
 }
