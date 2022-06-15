@@ -66,6 +66,8 @@ public class PhotoConfiguration: NSObject {
     public var showPreviewSelectPhotoBar = false
     /// Show the image captured by the camera is displayed on the camera button inside the album. Defaults to false.
     public var showCaptureImageOnTakePhotoBtn = false
+    /// Click on the image to return directly to the model
+    public var didSelectImageDirectreturn = false
     
     private var pri_allowTakePhoto = true
     /// Allow taking photos in the camera (Need allowSelectImage to be true). Defaults to true.
@@ -143,7 +145,7 @@ public class PhotoConfiguration: NSObject {
     public var navBarColor = UIColor.white
     
     /// A color for navigation bar in preview interface.
-    public var navBarColorOfPreviewVC = RGB(46, 47, 51)
+    public var navBarColorOfPreviewVC = UIColor.black
     
     /// A color for Navigation bar text.
     public var navTitleColor = UIColor.black
@@ -214,6 +216,7 @@ public class PhotoConfiguration: NSObject {
         allowSelectVideo = false
         showPreviewSelectPhotoBar = false
         autoCallbacksFirst = false
+        didSelectImageDirectreturn = true
     }
     /// 头像配置
     public func headConfiguration() {

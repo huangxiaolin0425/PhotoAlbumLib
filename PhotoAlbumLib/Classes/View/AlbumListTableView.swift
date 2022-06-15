@@ -69,15 +69,16 @@ class AlbumListTableView: UIView {
         self.addGestureRecognizer(tap)
     }
     
-    func loadAlbumList(completion: PhotoCompletionHandler? = nil) {
+   private func loadAlbumList(completion: PhotoCompletionHandler? = nil) {
         DispatchQueue.global().async {
             PhotoAlbumManager.getPhotoAlbumList(ascending: self.photoConfig.sortAscending, allowSelectImage: self.photoConfig.allowSelectImage, allowSelectVideo: self.photoConfig.allowSelectVideo, allowSelectGif: self.photoConfig.allowSelectGif) { [weak self] (albumList) in
-                self?.arrDataSource.removeAll()
-                self?.arrDataSource.append(contentsOf: albumList)
+                guard let self = self else { return }
+                self.arrDataSource.removeAll()
+                self.arrDataSource.append(contentsOf: albumList)
                 
                 DispatchQueue.main.async {
                     completion?()
-                    self?.tableView.reloadData()
+                    self.tableView.reloadData()
                 }
             }
         }
@@ -86,7 +87,7 @@ class AlbumListTableView: UIView {
    private func calculateBgViewBounds() -> CGRect {
         let contentH = CGFloat(self.arrDataSource.count) * rowHight
         
-        let maxH = min(kScreenHeight - kTabBarHeight - kNavHeight, contentH)
+       let maxH = min(PhotoEnvironment.device.kScreenHeight - kTabBarHeight - kNavHeight, contentH)
     
         return CGRect(x: 0, y: 0, width: self.frame.width, height: maxH)
     }

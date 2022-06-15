@@ -7,15 +7,10 @@
 import UIKit
 
 public class ProgressHUD: UIView {
-
     @objc public enum HUDStyle: Int {
-        
         case light
-        
         case lightBlur
-        
         case dark
-        
         case darkBlur
         
         func bgColor() -> UIColor {
@@ -57,7 +52,6 @@ public class ProgressHUD: UIView {
                 return .dark
             }
         }
-        
     }
     
     let style: ProgressHUD.HUDStyle
@@ -97,7 +91,7 @@ public class ProgressHUD: UIView {
         }
         
         let indicator = UIActivityIndicatorView(style: self.style.indicatorStyle())
-        indicator.frame = CGRect(x: (view.bounds.width - indicator.bounds.width)/2, y: 18, width: indicator.bounds.width, height: indicator.bounds.height)
+        indicator.frame = CGRect(x: (view.bounds.width - indicator.bounds.width) / 2, y: 18, width: indicator.bounds.width, height: indicator.bounds.height)
         indicator.startAnimating()
         view.addSubview(indicator)
         
@@ -137,6 +131,5 @@ public class ProgressHUD: UIView {
     func cleanTimer() {
         self.timer?.invalidate()
         self.timer = nil
-    }
-    
+    }    
 }

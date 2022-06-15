@@ -10,27 +10,33 @@ import UIKit
 import Photos
 
 public class PhotoAlbumManager: NSObject {
+    /// 1.图片选择器结果回调
     public var imageCallback: (([SelectAssetModel], Bool) -> Void)?
+    /// 2.选择器file文件大小回调, 回调方法的返回值为是否关闭当前图片控制器， true关闭，false不关闭
     public var fileAcquisitionCallback: (([SelectAssetModel], CGFloat, Bool) -> Bool)?
-    
+    /// 3.图片选择器点击item时，事件回调（⚠️：此方法的maxImageCount = 1并且imageType = image时调用, 一旦调用此block，imageCallback 将不再回调）
+    public var didSelectItemAtFileCallback: ((SelectAssetModel) -> Void)?
     /// present imagePicker
     /// - Parameters:
     ///   - controller: load controller
     ///   - photoConfig: imagePiker config
     ///   - callback: select model callback
     ///   - fileAcquisitionCallback: file size callback
-  public func presentPhotoAlbum(controller: UIViewController,
-                           photoConfig: PhotoConfiguration,
-                           callback: (([SelectAssetModel], Bool) -> Void)?,
-                           fileAcquisitionCallback: (([SelectAssetModel], CGFloat, Bool) -> Bool)? = nil) {
+    ///   - selectItemAtFileCallback: item file clicked callback
+    public func presentPhotoAlbum(controller: UIViewController,
+                                  photoConfig: PhotoConfiguration,
+                                  callback: (([SelectAssetModel], Bool) -> Void)?,
+                                  fileAcquisitionCallback: (([SelectAssetModel], CGFloat, Bool) -> Bool)? = nil,
+                                  selectItemAtFileCallback: ((SelectAssetModel) -> Void)? = nil) {
         self.imageCallback = callback
         self.fileAcquisitionCallback = fileAcquisitionCallback
+        self.didSelectItemAtFileCallback = selectItemAtFileCallback
         self.show(sender: controller, photoConfig: photoConfig)
     }
     
-   public func dismissPhotoPicker() {
+    public func dismissPhotoPicker() {
         guard let controller = UIViewController.currentViewController() else { return }
-        if controller.isMember(of: PhotoPickerViewController.self) {
+        if controller.isMember(of: PhotoPickerViewController.self) || controller.isMember(of: PhotoPreviewController.self) {
             controller.dismiss(animated: true, completion: nil)
         }
     }
@@ -75,10 +81,22 @@ extension PhotoAlbumManager {
             guard let callback = self.imageCallback else { return }
             callback(models, original)
         }
-        nav.fileAcquisitionCallback = { [weak self] (modes, fileSize, original) in
-            guard let self = self else { return true }
-            guard let callback = self.fileAcquisitionCallback else { return true }
-            return callback(modes, fileSize, original)
+        if self.fileAcquisitionCallback != nil {
+            nav.fileAcquisitionCallback = { [weak self] (modes, fileSize, original) in
+                guard let self = self else { return true }
+                guard let callback = self.fileAcquisitionCallback else { return true }
+                return callback(modes, fileSize, original)
+            }
+        }
+        if self.didSelectItemAtFileCallback != nil {
+            nav.didSelectItemAtFileCallback = { [weak self] (model) in
+                guard let self = self else { return }
+                guard let callback = self.didSelectItemAtFileCallback else { return }
+                return callback(model)
+            }
+        }
+        nav.selectImageRequestErrorBlock = { (assets, indexs) in
+            print("photo manager select request error assets: \(assets) , indexs: \(indexs)")
         }
         nav.arrSelectedModels.removeAll()
         
@@ -98,7 +116,7 @@ extension PhotoAlbumManager {
     }
     
     /// Fetch photos from result.
-    static func fetchPhoto(in result: PHFetchResult<PHAsset>, ascending: Bool, allowSelectImage: Bool, allowSelectVideo: Bool, limitCount: Int = .max) -> [PhotoModel] {
+    static func fetchPhoto(in result: PHFetchResult<PHAsset>, ascending: Bool, allowSelectImage: Bool, allowSelectVideo: Bool, allowSelectGif: Bool, limitCount: Int = .max) -> [PhotoModel] {
         var models: [PhotoModel] = []
         let option: NSEnumerationOptions = ascending ? .init(rawValue: 0) : .reverse
         var count = 1
@@ -112,6 +130,10 @@ extension PhotoAlbumManager {
             if m.type == .video, !allowSelectVideo {
                 return
             }
+            if m.type == .gif, !allowSelectGif {
+                return
+            }
+            
             if count == limitCount {
                 stop.pointee = true
             }
@@ -141,7 +163,7 @@ extension PhotoAlbumManager {
         return PHImageManager.default().requestImageData(for: asset, options: option) { (data, _, _, info) in
             let cancel = info?[PHImageCancelledKey] as? Bool ?? false
             let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool ?? false)
-            if !cancel, let data = data {
+            if !cancel {
                 completion(data, info, isDegraded)
             }
         }
@@ -293,20 +315,25 @@ extension PhotoAlbumManager {
     public static func photosBytes(with models: [SelectAssetModel], completion: @escaping ( (CGFloat) -> Void )) {
         var totalSize = 0.0
         var modelCount = 0
+        
+        let call = { (asset: PHAsset) in
+            guard let resources = asset.assetResources else { return }
+            guard let fileSize = (resources.value(forKey: "fileSize") as? CLong) else { return }
+            totalSize += CGFloat(fileSize)
+            modelCount += 1
+            if modelCount >= models.count {
+                if let size = Double(String(format: "%.2f", arguments: [totalSize])) {
+                    completion(size)
+                } else {
+                    completion(totalSize)
+                }
+            }
+        }
+                
         for model in models {
             guard let asset = model.asset else { return }
             if asset.isInCloud {
-                guard let resources = asset.assetResources else { return }
-                guard let fileSize = (resources.value(forKey: "fileSize") as? CLong) else { return }
-                totalSize += CGFloat(fileSize)
-                modelCount += 1
-                if modelCount >= models.count {
-                    if let size = Double(String(format: "%.2f", arguments: [totalSize])) {
-                        completion(size)
-                    } else {
-                        completion(totalSize)
-                    }
-                }
+              call(asset)
             } else {
                 if !isVideo(asset: asset) {
                     PhotoAlbumManager.fetchOriginalImageData(for: asset, isNetworkAccessAllowed: false, progress: nil, completion: { (data, _, _) in
@@ -325,17 +352,7 @@ extension PhotoAlbumManager {
                         }
                     })
                 } else {
-                    guard let resources = asset.assetResources else { return }
-                    guard let fileSize = (resources.value(forKey: "fileSize") as? CLong) else { return }
-                    totalSize += CGFloat(fileSize)
-                    modelCount += 1
-                    if modelCount >= models.count {
-                        if let size = Double(String(format: "%.2f", arguments: [totalSize])) {
-                            completion(size)
-                        } else {
-                            completion(totalSize)
-                        }
-                    }
+                    call(asset)
                 }
             }
         }
@@ -446,6 +463,19 @@ extension PhotoAlbumManager {
 
 extension PhotoAlbumManager {
     private func alertPhotoAuthor() {
+//        AlertViewController.showAlert("提示".localString,
+//                                      message: "请在iOS的\"设置-隐私\"选项中允许照片-读取和写入。".localString,
+//                                      showCheckout: false,
+//                                      firstButtonTitle: "取消".localString,
+//                                      secondButtonTitle: "去开启".localString,
+//                                      actionButtonColor: .COLOR_5A90FB,
+//                                      opacity: 0.3 ) { [weak self] (_, index: Int) in
+//            guard let self = self else { return }
+//            if index == 1 {
+//                jumpToAppSettingPage()
+//            }
+//        }
+        
         let alert = UIAlertController(title: "提示", message: "请在iOS的\"设置-隐私\"选项中允许照片-读取和写入。", preferredStyle: .alert)
         let action = UIAlertAction(title: "去开启", style: .default) { _ in
             jumpToAppSettingPage()

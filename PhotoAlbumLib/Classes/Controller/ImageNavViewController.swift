@@ -7,7 +7,6 @@
 
 import UIKit
 import Photos
-import SwiftUI
 
 class ImageNavViewController: UINavigationController {
     var photoConfig = PhotoConfiguration()
@@ -21,6 +20,7 @@ class ImageNavViewController: UINavigationController {
     var selectImageBlock: ( ([SelectAssetModel], Bool) -> Void )?
     var fileAcquisitionCallback: (([SelectAssetModel], CGFloat, Bool) -> Bool)?
     var selectImageRequestErrorBlock: ( ([PHAsset], [Int]) -> Void )?
+    var didSelectItemAtFileCallback: ((SelectAssetModel) -> Void)?
     
     private lazy var fetchImageQueue: OperationQueue = OperationQueue()
 

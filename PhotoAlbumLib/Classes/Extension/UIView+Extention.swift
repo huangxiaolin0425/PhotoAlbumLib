@@ -319,6 +319,22 @@ extension UIView {
 
 // MARK: - convenience Animation
 extension UIView {
+    func springAnimation() {
+        let animate = CAKeyframeAnimation(keyPath: "transform")
+        animate.duration = 0.5
+        animate.isRemovedOnCompletion = true
+        animate.fillMode = .forwards
+        
+        animate.values = [
+            CATransform3DMakeScale(0.7, 0.7, 1),
+            CATransform3DMakeScale(1.2, 1.2, 1),
+            CATransform3DMakeScale(0.8, 0.8, 1),
+            CATransform3DMakeScale(1, 1, 1)
+        ]
+        
+        self.layer.add(animate, forKey: nil)
+    }
+    
     func startRotateAnimation() {
         let rotateAnimate = CAKeyframeAnimation(keyPath: "transform.rotation.z")
         let rotateDirection = CGFloat.pi / 12

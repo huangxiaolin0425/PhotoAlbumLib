@@ -9,7 +9,7 @@ import UIKit
 import Photos
 
 /// 预览视图显示的已选择照片列表
-class PhotoPreviewSelectedView: UIView, UICollectionViewDataSource, UICollectionViewDelegate {
+class PhotoPreviewSelectedView: UIView {
     private lazy var collectionView = UICollectionView()
     
     private var photoConfig: PhotoConfiguration
@@ -100,13 +100,15 @@ class PhotoPreviewSelectedView: UIView, UICollectionViewDataSource, UICollection
         }
         self.collectionView.reloadItems(at: [IndexPath(row: index, section: 0)])
     }
-    
+}
+
+extension PhotoPreviewSelectedView: UICollectionViewDataSource, UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return self.arrSelectedModels.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: String(describing: AlbumListCell.self), for: indexPath) as? PhotoPreviewSelectedViewCell else {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: String(describing: PhotoPreviewSelectedViewCell.self), for: indexPath) as? PhotoPreviewSelectedViewCell else {
             fatalError("Unknown cell type (\(PhotoPreviewSelectedViewCell.self)) for reuse identifier: \( String(describing: PhotoPreviewSelectedViewCell.self))")
         }
         let model = self.arrSelectedModels[indexPath.row]

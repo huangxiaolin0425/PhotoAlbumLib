@@ -39,7 +39,7 @@ class AlbumListModel: NSObject {
     }
     
     func refetchPhotos(photoConfig: PhotoConfiguration) {
-        let models = PhotoAlbumManager.fetchPhoto(in: self.result, ascending: photoConfig.sortAscending, allowSelectImage: photoConfig.allowSelectImage, allowSelectVideo: photoConfig.allowSelectVideo)
+        let models = PhotoAlbumManager.fetchPhoto(in: self.result, ascending: photoConfig.sortAscending, allowSelectImage: photoConfig.allowSelectImage, allowSelectVideo: photoConfig.allowSelectVideo, allowSelectGif: photoConfig.allowSelectGif)
         self.models.removeAll()
         self.models.append(contentsOf: models)
     }

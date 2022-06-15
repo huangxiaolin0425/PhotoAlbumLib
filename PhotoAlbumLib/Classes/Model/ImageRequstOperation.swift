@@ -7,7 +7,6 @@
 
 import UIKit
 import Photos
-import SwiftUI
 
 class ImageRequstOperation: Operation {
     let model: PhotoModel
@@ -79,11 +78,18 @@ class ImageRequstOperation: Operation {
         
         if photoConfig.allowSelectGif, self.model.type == .gif {
             self.requestImageID = PhotoAlbumManager.fetchOriginalImageData(for: self.model.asset) { [weak self] (data, _, isDegraded) in
+                guard let self = self else { return }
                 if !isDegraded {
                     if let data = data {
                         let image = UIImage.animateGifImage(data: data)
-                        self?.completion(image, data, nil)
-                        self?.fetchFinish()
+                        self.completion(image, data, nil)
+                        self.fetchFinish()
+                    } else {
+                        PhotoAlbumManager.fetchImage(for: self.model.asset, size: self.model.previewSize, completion: { [weak self] (image, isDegraded) in
+                            guard let self = self else { return }
+                            self.completion(image, data, nil)
+                            self.fetchFinish()
+                        })
                     }
                 }
             }

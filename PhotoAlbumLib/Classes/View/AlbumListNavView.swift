@@ -15,7 +15,7 @@ class AlbumListNavView: UIView {
     var title: String {
         didSet {
             albumTitleLabel.text = title
-            refreshTitleViewFrame()
+            refreshTitleViewFrame(animate: true)
         }
     }
         
@@ -48,29 +48,37 @@ class AlbumListNavView: UIView {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        refreshTitleViewFrame()
+        refreshTitleViewFrame(animate: false)
     }
     
-    func refreshTitleViewFrame() {
+    func refreshTitleViewFrame(animate: Bool) {
         let albumTitleW = min(bounds.width / 2, title.boundingRect(for: UIFont.regular(ofSize: 15), constrained: CGSize(width: CGFloat.greatestFiniteMagnitude, height: 44)).width)
         let titleBgControlW = albumTitleW + AlbumListNavView.arrowH + 20
         cancelButton.frame = CGRect(x: 0, y: kStatusBarHeight, width: 44, height: 44)
         bottomLine.frame = CGRect(x: 0, y: self.frame.height - 0.5, width: self.frame.width, height: 0.5)
-        UIView.animate(withDuration: 0.25) {
-            self.titleBgControl.frame = CGRect(
-                x: (self.frame.width - titleBgControlW) / 2,
-                y: kStatusBarHeight + (44 - AlbumListNavView.titleViewH) / 2,
-                width: titleBgControlW,
-                height: AlbumListNavView.titleViewH
-            )
-            self.albumTitleLabel.frame = CGRect(x: 10, y: 0, width: albumTitleW, height: AlbumListNavView.titleViewH)
-            self.arrowImageView.frame = CGRect(
-                x: self.albumTitleLabel.frame.maxX + 3,
-                y: (AlbumListNavView.titleViewH - AlbumListNavView.arrowH) / 2.0,
-                width: AlbumListNavView.arrowH,
-                height: AlbumListNavView.arrowH
-            )
+        if animate {
+            UIView.animate(withDuration: 0.25) {
+                self.setViewFrame(albumTitleW: albumTitleW, titleBgControlW: titleBgControlW)
+            }
+        } else {
+            self.setViewFrame(albumTitleW: albumTitleW, titleBgControlW: titleBgControlW)
         }
+    }
+    
+    private func setViewFrame(albumTitleW: CGFloat, titleBgControlW: CGFloat) {
+        self.titleBgControl.frame = CGRect(
+            x: (self.frame.width - titleBgControlW) / 2,
+            y: kStatusBarHeight + (44 - AlbumListNavView.titleViewH) / 2,
+            width: titleBgControlW,
+            height: AlbumListNavView.titleViewH
+        )
+        self.albumTitleLabel.frame = CGRect(x: 10, y: 0, width: albumTitleW, height: AlbumListNavView.titleViewH)
+        self.arrowImageView.frame = CGRect(
+            x: self.albumTitleLabel.frame.maxX + 3,
+            y: (AlbumListNavView.titleViewH - AlbumListNavView.arrowH) / 2.0,
+            width: AlbumListNavView.arrowH,
+            height: AlbumListNavView.arrowH
+        )
     }
     
     func initialAppearance() {

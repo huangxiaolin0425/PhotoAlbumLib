@@ -20,7 +20,7 @@ class AssetCell: UICollectionViewCell {
     private lazy var progressView = PhotoProgressView()
     
     var selectedBlock: PhotoCompletionObjectHandler<Bool>?
-
+    
     private var model: PhotoModel!
     
     private var photoConfig: PhotoConfiguration!
@@ -56,7 +56,7 @@ class AssetCell: UICollectionViewCell {
         self.buttonSelect.setImage(getImage("photo_def_photoPickerVc"), for: .normal)
         self.buttonSelect.setImage(getImage("photo_preview_selected"), for: .selected)
         self.buttonSelect.addTarget(self, action: #selector(btnSelectClick), for: .touchUpInside)
-//        self.buttonSelect.enlargeResponseEdge = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        //        self.buttonSelect.enlargeResponseEdge = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         self.contentView.addSubview(self.buttonSelect)
         
         self.indexLabel.layer.cornerRadius = 22.0 / 2
@@ -110,7 +110,7 @@ class AssetCell: UICollectionViewCell {
         
         self.buttonSelect.layer.removeAllAnimations()
         if !self.buttonSelect.isSelected {
-            self.buttonSelect.layer.add(getSpringAnimation(), forKey: nil)
+            self.buttonSelect.springAnimation()
         }
         
         if self.buttonSelect.isSelected == false {
@@ -127,6 +127,7 @@ class AssetCell: UICollectionViewCell {
         self.photoConfig = photoConfig
         configureCell()
     }
+    
     private func configureCell() {
         if self.model.type == .video {
             self.bottomShadowView.isHidden = false
@@ -167,7 +168,7 @@ class AssetCell: UICollectionViewCell {
         self.fetchSmallImage()
     }
     
-    func fetchSmallImage() {
+    private func fetchSmallImage() {
         let size: CGSize
         let maxSideLength = self.bounds.width * 1.2
         if self.model.whRatio > 1 {
@@ -194,7 +195,7 @@ class AssetCell: UICollectionViewCell {
         })
     }
     
-    func fetchBigImage(or getfileBytes: Bool = false) {
+    private func fetchBigImage(or getfileBytes: Bool = false) {
         self.cancelFetchBigImage()
         
         if getfileBytes {
@@ -206,7 +207,7 @@ class AssetCell: UICollectionViewCell {
                     return
                 }
                 showAlertView(String(format: "文件大小已超过%.2fM，不支持发送", arguments: [photoConfig.maxImageByte / 1024.0 / 1024.0]), nil)
-                 } else {
+            } else {
                 if self.model.type != .video {
                     self.bigImageReqeustID = PhotoAlbumManager.fetchOriginalImageData(for: self.model.asset, isNetworkAccessAllowed: false, progress: { [weak self] (progress, error, _, _) in
                         if self?.model.isSelected == true {
@@ -240,32 +241,34 @@ class AssetCell: UICollectionViewCell {
                         return
                     }
                     showAlertView(String(format: "文件大小已超过%.2fM，不支持发送", arguments: [photoConfig.maxImageByte / 1024.0 / 1024.0]), nil)
-                    }
-            }} else {
-                self.bigImageReqeustID = PhotoAlbumManager.fetchOriginalImageData(for: self.model.asset, progress: { [weak self] (progress, error, _, _) in
-                    if self?.model.isSelected == true {
-                        self?.progressView.isHidden = false
-                        self?.progressView.progress = max(0.1, progress)
-                        self?.imageView.alpha = 0.5
-                        if progress >= 1 {
-                            self?.resetProgressViewStatus()
-                        }
-                    } else {
-                        self?.cancelFetchBigImage()
-                    }
-                }, completion: { [weak self] (_, _, _) in
-                    self?.resetProgressViewStatus()
-                })
+                }
             }
+        } else {
+            self.bigImageReqeustID = PhotoAlbumManager.fetchOriginalImageData(for: self.model.asset, progress: { [weak self] (progress, error, _, _) in
+                if self?.model.isSelected == true {
+                    self?.progressView.isHidden = false
+                    self?.progressView.progress = max(0.1, progress)
+                    self?.imageView.alpha = 0.5
+                    if progress >= 1 {
+                        self?.resetProgressViewStatus()
+                    }
+                } else {
+                    self?.cancelFetchBigImage()
+                }
+            }, completion: { [weak self] (_, _, _) in
+                self?.resetProgressViewStatus()
+            })
+        }
     }
-    func isBytesGreaterMaxImageData(dataLength: CGFloat) -> Bool {
+    
+    private func isBytesGreaterMaxImageData(dataLength: CGFloat) -> Bool {
         if dataLength > photoConfig.maxImageByte {
             return true
         }
         return false
     }
     
-    func cancelFetchBigImage() {
+    private func cancelFetchBigImage() {
         if self.bigImageReqeustID > PHInvalidImageRequestID {
             PHImageManager.default().cancelImageRequest(self.bigImageReqeustID)
         }

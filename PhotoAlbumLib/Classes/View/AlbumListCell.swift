@@ -42,7 +42,6 @@ class AlbumListCell: UITableViewCell {
         self.lineView.frame = CGRect(x: 15, y: self.bounds.height - 1, width: self.bounds.width - 15, height: 0.5)
     }
     func initialAppearance() {
-    
         albumImageView.contentMode = .scaleAspectFill
         albumImageView.clipsToBounds = true
         albumImageView.cornerRadius = 8

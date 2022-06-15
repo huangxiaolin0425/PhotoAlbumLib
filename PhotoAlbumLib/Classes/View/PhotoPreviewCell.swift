@@ -131,8 +131,8 @@ class PhotoPreviewCell: PhotoPreviewBaseCell {
     }
     
     override func animateImageFrame(convertTo view: UIView) -> CGRect {
-        let r1 = self.preview.scrollView.convert(self.preview.containerView.frame, to: self)
-        return self.convert(r1, to: view)
+        let point = self.preview.scrollView.convert(self.preview.containerView.frame, to: self)
+        return self.convert(point, to: view)
     }
     
     func config(model: PhotoModel, photoConfig: PhotoConfiguration) {
@@ -250,12 +250,12 @@ class VideoPreviewCell: PhotoPreviewBaseCell {
         self.syncErrorLabel.frame = CGRect(x: 10, y: kStatusBarHeight + 60, width: self.bounds.width - 20, height: 35)
         self.progressView.frame = CGRect(x: self.bounds.width / 2 - 30, y: self.bounds.height / 2 - 30, width: 60, height: 60)
         self.resizeImageView(imageView: self.imageView, asset: model.asset)
-        self.timePlayButton.frame = CGRect(x: 30, y: kScreenHeight - bottomViewH - 45, width: 30, height: 30)
-        self.progressLineView.frame = CGRect(x: self.timePlayButton.right + 20, y: 0, width: kScreenWidth - 25 - self.timePlayButton.width - 50, height: 2)
+        self.timePlayButton.frame = CGRect(x: 30, y: PhotoEnvironment.device.kScreenHeight - bottomViewH - 45, width: 30, height: 30)
+        self.progressLineView.frame = CGRect(x: self.timePlayButton.right + 20, y: 0, width: PhotoEnvironment.device.kScreenWidth - 25 - self.timePlayButton.width - 50, height: 2)
         self.progressLineView.centerY = self.timePlayButton.centerY
         self.videoSlider.frame = self.progressLineView.frame
         self.timeplayLabel.frame = CGRect(x: self.progressLineView.left, y: self.progressLineView.bottom + 5, width: 100, height: 20)
-        self.timeLabel.frame = CGRect(x: kScreenWidth - 25 - 100, y: self.progressLineView.bottom + 5, width: 100, height: 20)
+        self.timeLabel.frame = CGRect(x: PhotoEnvironment.device.kScreenWidth - 25 - 100, y: self.progressLineView.bottom + 5, width: 100, height: 20)
     }
     
     private func initialAppearance() {

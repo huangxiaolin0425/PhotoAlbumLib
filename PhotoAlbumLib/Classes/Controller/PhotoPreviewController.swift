@@ -9,7 +9,7 @@ import UIKit
 
 class PhotoPreviewController: UIViewController {
     static let previewVCScrollNotification = Notification.Name("previewVCScrollNotification")
-
+    
     private lazy var navgationView = UIView()
     private lazy var backButton = UIButton(type: .custom)
     
@@ -77,7 +77,7 @@ class PhotoPreviewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
-        let itemSpacing = PhotoLayout.previcewCollectionItemSpacing
+        let itemSpacing = PhotoEnvironment.layout.previcewCollectionItemSpacing
         self.collectionView.frame = CGRect(x: -(itemSpacing / 2), y: 0, width: self.view.frame.width + itemSpacing, height: self.view.frame.height)
         
         self.navgationView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: kNavHeight)
@@ -91,7 +91,7 @@ class PhotoPreviewController: UIViewController {
         
         let bottomViewH = 50 + kSafeBottomHeight
         if photoConfig.showPreviewSelectPhotoBar {
-            self.selectButton.frame = CGRect(x: kScreenWidth - 40, y: 0, width: 25, height: 25)
+            self.selectButton.frame = CGRect(x: PhotoEnvironment.device.kScreenWidth - 40, y: 0, width: 25, height: 25)
             self.selectButton.centerY = self.backButton.centerY
         } else {
             self.selectButton.frame = CGRect(x: 15, y: 10, width: 25, height: 25)
@@ -112,7 +112,13 @@ class PhotoPreviewController: UIViewController {
         
         // nav view
         self.navgationView = UIView()
-        self.navgationView.backgroundColor = photoConfig.navBarColorOfPreviewVC
+        self.navgationView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: kNavHeight)
+        let gradientLayer: CAGradientLayer = CAGradientLayer()
+        gradientLayer.frame = self.navgationView.bounds
+        gradientLayer.colors = NSArray(array: [UIColor.black.cgColor, UIColor.clear.cgColor]) as? [Any]
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 0, y: 1)
+        self.navgationView.layer.addSublayer(gradientLayer)
         view.addSubview(self.navgationView)
         
         self.backButton = UIButton(type: .custom)
@@ -159,9 +165,9 @@ class PhotoPreviewController: UIViewController {
         self.selectButton = UIButton(type: .custom)
         self.selectButton.setImage(getImage("photo_preview_unselected"), for: .normal)
         self.selectButton.setImage(getImage("photo_preview_selected"), for: .selected)
-//        self.selectButton.enlargeResponseEdge = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        //        self.selectButton.enlargeResponseEdge = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         self.selectButton.addTarget(self, action: #selector(selectBtnClick), for: .touchUpInside)
-    
+        
         if photoConfig.showPreviewSelectPhotoBar {
             self.navgationView.addSubview(self.selectButton)
         } else {
@@ -216,7 +222,7 @@ class PhotoPreviewController: UIViewController {
         
         if photoConfig.showPreviewSelectPhotoBar, let nav = self.navigationController as? ImageNavViewController {
             if !nav.arrSelectedModels.isEmpty {
-                self.selPhotoPreview?.frame = CGRect(x: 0, y: kScreenHeight - (50 + kSafeBottomHeight) - PhotoLayout.previewCollectionViewHeight, width: self.view.frame.width, height: PhotoLayout.previewCollectionViewHeight)
+                self.selPhotoPreview?.frame = CGRect(x: 0, y: PhotoEnvironment.device.kScreenHeight - (50 + kSafeBottomHeight) - PhotoEnvironment.layout.previewCollectionViewHeight, width: self.view.frame.width, height: PhotoEnvironment.layout.previewCollectionViewHeight)
             }
         }
     }
@@ -257,7 +263,10 @@ class PhotoPreviewController: UIViewController {
             nav.arrSelectedModels.removeAll { $0 == currentModel }
             self.selPhotoPreview?.removeSelModel(model: currentModel)
         } else {
-            self.selectButton.layer.add(getSpringAnimation(), forKey: nil)
+            // 判断文件大小
+            guard selectFileSizeGreater(model: currentModel) == false else { return }
+            
+            self.selectButton.springAnimation()
             if !canAddModel(currentModel, photoConfig: photoConfig, currentSelectCount: nav.arrSelectedModels.count, sender: self) {
                 return
             }
@@ -266,6 +275,21 @@ class PhotoPreviewController: UIViewController {
             self.selPhotoPreview?.addSelModel(model: currentModel)
         }
         self.resetSubViewStatus()
+    }
+    
+    private func selectFileSizeGreater(model: PhotoModel) -> Bool {
+        guard let resources = model.asset.assetResources else { return false }
+        guard let fileSize = (resources.value(forKey: "fileSize") as? CLong) else { return false }
+        guard self.isBytesGreaterMaxImageData(dataLength: CGFloat(fileSize)) else { return false }
+        showAlertView(String(format: "文件大小已超过%.2fM，不支持发送", arguments: [photoConfig.maxImageByte / 1024.0 / 1024.0]), nil)
+        return true
+    }
+    
+    private func isBytesGreaterMaxImageData(dataLength: CGFloat) -> Bool {
+        if dataLength > photoConfig.maxImageByte {
+            return true
+        }
+        return false
     }
     
     private func resetSubViewStatus() {
@@ -407,15 +431,15 @@ extension PhotoPreviewController: UICollectionViewDataSource {
 
 extension PhotoPreviewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return PhotoLayout.previcewCollectionItemSpacing
+        return PhotoEnvironment.layout.previcewCollectionItemSpacing
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return PhotoLayout.previcewCollectionItemSpacing
+        return PhotoEnvironment.layout.previcewCollectionItemSpacing
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets(top: 0, left: PhotoLayout.previcewCollectionItemSpacing / 2, bottom: 0, right: PhotoLayout.previcewCollectionItemSpacing / 2)
+        return UIEdgeInsets(top: 0, left: PhotoEnvironment.layout.previcewCollectionItemSpacing / 2, bottom: 0, right: PhotoEnvironment.layout.previcewCollectionItemSpacing / 2)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -430,14 +454,14 @@ extension PhotoPreviewController {
         }
         NotificationCenter.default.post(name: PhotoPreviewController.previewVCScrollNotification, object: nil)
         let offset = scrollView.contentOffset
-        var page = Int(round(offset.x / (self.view.bounds.width + PhotoLayout.previcewCollectionItemSpacing)))
+        var page = Int(round(offset.x / (self.view.bounds.width + PhotoEnvironment.layout.previcewCollectionItemSpacing)))
         page = max(0, min(page, self.arrDataSources.count - 1))
         if page == self.currentIndex {
             return
         }
         self.currentIndex = page
         self.resetSubViewStatus()
-                self.selPhotoPreview?.currentShowModelChanged(model: self.arrDataSources[self.currentIndex])
+        self.selPhotoPreview?.currentShowModelChanged(model: self.arrDataSources[self.currentIndex])
     }
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {

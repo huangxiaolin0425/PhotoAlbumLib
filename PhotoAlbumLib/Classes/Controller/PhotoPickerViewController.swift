@@ -19,8 +19,6 @@ class PhotoPickerViewController: UIViewController {
     private var albumListTableView: AlbumListTableView?
     
     private var viewModel: PhotoPickerViewModel
-    /// 记录是否需要刷新相册列表
-    private var hasTakeANewAsset = false
     
     private var showCameraCell: Bool {
         if viewModel.photoConfig.showCaptureImageOnTakePhotoBtn {
@@ -49,17 +47,22 @@ class PhotoPickerViewController: UIViewController {
         
         let nav = self.navigationController as! ImageNavViewController
         self.viewModel.loadPhotos(coordinator: nav)
-        
-        if #available(iOS 14.0, *), PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited {
-            PHPhotoLibrary.shared().register(self)
-        }
+        /// 不注册相册内容监听
+//        if #available(iOS 14.0, *), PHPhotoLibrary.authorizationStatus(for: .readWrite) == .authorized {
+//            PHPhotoLibrary.shared().register(self)
+//        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.isHidden = true
-        self.collectionView.reloadItems(at: self.collectionView.indexPathsForVisibleItems)
-        self.resetBottomToolBtnStatus() // 进入页面时刷新底部视图
+        if viewModel.isWebOneImage {
+            let nav = self.navigationController as! ImageNavViewController
+            nav.arrSelectedModels.removeAll()
+        } else {
+            self.collectionView.reloadItems(at: self.collectionView.indexPathsForVisibleItems)
+            self.resetBottomToolBtnStatus() // 进入页面时刷新底部视图
+        }
     }
     
     override func viewDidLayoutSubviews() {
@@ -74,9 +77,9 @@ class PhotoPickerViewController: UIViewController {
         let bottomViewH = 50 + kSafeBottomHeight
         
         if showBottomToolBtns {
-            self.collectionView.frame = CGRect(x: 0, y: kNavHeight, width: kScreenWidth, height: kScreenHeight - kNavHeight - kTabBarHeight)
+            self.collectionView.frame = CGRect(x: 0, y: kNavHeight, width: PhotoEnvironment.device.kScreenWidth, height: PhotoEnvironment.device.kScreenHeight - kNavHeight - kTabBarHeight)
         } else {
-            self.collectionView.frame = CGRect(x: 0, y: kNavHeight, width: kScreenWidth, height: kScreenHeight - kNavHeight)
+            self.collectionView.frame = CGRect(x: 0, y: kNavHeight, width: PhotoEnvironment.device.kScreenWidth, height: PhotoEnvironment.device.kScreenHeight - kNavHeight)
         }
         
         guard showBottomToolBtns else { return }
@@ -97,7 +100,7 @@ class PhotoPickerViewController: UIViewController {
         self.view.backgroundColor = viewModel.photoConfig.thumbnailBgColor
         
         let layout = UICollectionViewFlowLayout()
-        let inset = PhotoLayout.thumbCollectionViewFlowLayoutSectionInset
+        let inset = PhotoEnvironment.layout.thumbCollectionViewFlowLayoutSectionInset
         layout.sectionInset = UIEdgeInsets(top: inset, left: inset, bottom: inset, right: inset)
         
         self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -124,11 +127,12 @@ class PhotoPickerViewController: UIViewController {
         guard let navView = navgationView else { return }
         
         navView.selectAlbumBlock = { [weak self] in
-            if self?.albumListTableView?.isHidden == true {
-                self?.albumListTableView?.show(reloadAlbumList: self?.hasTakeANewAsset ?? false)
-                self?.hasTakeANewAsset = false
+            guard let self = self else { return }
+            if self.albumListTableView?.isHidden == true {
+                self.albumListTableView?.show(reloadAlbumList: self.viewModel.hasTakeANewAsset)
+                self.viewModel.hasTakeANewAsset = false
             } else {
-                self?.albumListTableView?.hide()
+                self.albumListTableView?.hide()
             }
         }
         
@@ -265,7 +269,7 @@ extension PhotoPickerViewController: UICollectionViewDataSource {
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: String(describing: AssetCameraCell.self), for: indexPath) as? AssetCameraCell else {
                 fatalError("Unknown cell type (\(AssetCameraCell.self)) for reuse identifier: \( String(describing: AssetCameraCell.self))")
             }
-
+            
             return cell
         }
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: String(describing: AssetCell.self), for: indexPath) as? AssetCell else {
@@ -280,7 +284,7 @@ extension PhotoPickerViewController: UICollectionViewDataSource {
             model = self.viewModel.arrDataSources[indexPath.row]
         }
         cell.config(model: model, photoConfig: viewModel.photoConfig)
-
+        
         let nav = self.navigationController as? ImageNavViewController
         cell.selectedBlock = { [weak self, weak nav, weak cell] (isSelected) in
             guard let self = self else { return }
@@ -311,7 +315,7 @@ extension PhotoPickerViewController: UICollectionViewDataSource {
         }
         
         cell.setCellMaskView(isSelected: model.isSelected, model: model)
-                
+        
         return cell
     }
     
@@ -333,147 +337,40 @@ extension PhotoPickerViewController: UICollectionViewDataSource {
             fetchCameraStatus()
             return
         }
-        let nav = self.navigationController as? ImageNavViewController
+        guard let nav = self.navigationController as? ImageNavViewController else { return }
         
         guard let cell = cell as? AssetCell else { return }
-                
-        let model = self.viewModel.arrDataSources[indexPath.row]
-        if viewModel.photoConfig.maxImagesCount == 1, (model.type == .image || model.type == .livePhoto), viewModel.photoConfig.allowCrop == true {
-            let loadingView = ProgressHUD(style: .darkBlur)
-            loadingView.show()
-            PhotoAlbumManager.fetchImage(for: model.asset, size: model.previewSize) { [weak self] (image, isDegraded) in
-                guard let self = self else { return }
-                if !isDegraded {
-                    loadingView.hide()
-                    if let image = image {
-                        self.showEditImageVC(image: image, model: model, cell: cell)
-                    } else {
-                        showAlertView("图片加载失败", nil)
-                    }
-                }
-            }
-        } else if viewModel.photoConfig.allowPreviewPhotos == false {
-            /// 直接返回选中的图片
-            nav?.arrSelectedModels.append(model)
-            doneBtnClick()
-        } else {
-            if !viewModel.photoConfig.allowPreviewPhotos {
-                cell.btnSelectClick()
-                return
-            }
-            if !cell.enableSelect, viewModel.photoConfig.showInvalidMask { return }
-            
-            var index = indexPath.row
-            if !viewModel.photoConfig.sortAscending {
-                index -= self.offset
-            }
-            
-            let previewController = PhotoPreviewController(photos: self.viewModel.arrDataSources, photoConfig: viewModel.photoConfig, index: index)
-            self.show(previewController, sender: nil)
-        }
-    }
-    
-    private func showEditImageVC(image: UIImage, model: PhotoModel, cell: AssetCell) {
-        let nav = self.navigationController as! ImageNavViewController
-        let clipImageController = ClipImageViewController(model: model, image: image)
-        clipImageController.imageClipBlock = { image in
-            guard let block = nav.selectImageBlock else { return }
-            let model = SelectAssetModel()
-            model.photo = image
-            block([model], nav.isSelectedOriginal)
-        }
-        self.show(clipImageController, sender: nil)
+        
+        viewModel.didSelectItemAt(indexPath: indexPath, navController: nav, cell: cell, offset: offset)
     }
     
     private func refreshCellIndexAndMaskView() {
-        let showIndex = viewModel.photoConfig.showSelectedIndex
-        let showMask = viewModel.photoConfig.showSelectedMask || viewModel.photoConfig.showInvalidMask
-        
-        guard showIndex || showMask else {
-            return
-        }
-        
-        let visibleIndexPaths = self.collectionView.indexPathsForVisibleItems
-        
-        visibleIndexPaths.forEach { (indexPath) in
-            guard let cell = self.collectionView.cellForItem(at: indexPath) as? AssetCell else {
-                return
-            }
-            var row = indexPath.row
-            if !viewModel.photoConfig.sortAscending {
-                row -= self.offset
-            }
-            let model = self.viewModel.arrDataSources[row]
-            
-            let arrSelectedModel = (self.navigationController as? ImageNavViewController)?.arrSelectedModels ?? []
-            var show = false
-            var idx = 0
-            var isSelected = false
-            for (index, selectModel) in arrSelectedModel.enumerated() where selectModel == model {
-                show = true
-                idx = index + 1
-                isSelected = true
-                break
-            }
-            if showIndex {
-                cell.setCellIndex(showIndexLabel: show, index: idx)
-            }
-            if showMask {
-                cell.setCellMaskView(isSelected: isSelected, model: model)
-            }
-        }
+        guard let nav = self.navigationController as? ImageNavViewController else { return }
+        viewModel.refreshCellIndexAndMaskViewAt(collectionView: collectionView, navController: nav, offset: offset)
     }
 }
 
 extension PhotoPickerViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return PhotoLayout.thumbCollectionViewItemSpacing
+        return PhotoEnvironment.layout.thumbCollectionViewItemSpacing
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return PhotoLayout.thumbCollectionViewLineSpacing
+        return PhotoEnvironment.layout.thumbCollectionViewLineSpacing
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let columnCount = CGFloat(viewModel.photoConfig.columnCount)
-        let totalW = collectionView.bounds.width - (columnCount + 1) * PhotoLayout.thumbCollectionViewItemSpacing
+        let totalW = collectionView.bounds.width - (columnCount + 1) * PhotoEnvironment.layout.thumbCollectionViewItemSpacing
         let singleW = totalW / columnCount
         return CGSize(width: singleW, height: singleW)
     }
 }
-
+// MARK: - 相册内容改变通知
 extension PhotoPickerViewController: PHPhotoLibraryChangeObserver {
     func photoLibraryDidChange(_ changeInstance: PHChange) {
-        guard let changes = changeInstance.changeDetails(for: self.viewModel.albumList.result)
-        else { return }
-        DispatchQueue.main.async {
-            // 相册变化后再次显示相册列表需要刷新
-            self.viewModel.albumList.result = changes.fetchResultAfterChanges
-            let nav = (self.navigationController as! ImageNavViewController)
-            if changes.hasIncrementalChanges {
-                for sm in nav.arrSelectedModels {
-                    let isDelete = changeInstance.changeDetails(for: sm.asset)?.objectWasDeleted ?? false
-                    if isDelete {
-                        nav.arrSelectedModels.removeAll { $0 == sm }
-                    }
-                }
-                if (!changes.removedObjects.isEmpty || !changes.insertedObjects.isEmpty) {
-                    self.viewModel.albumList.models.removeAll()
-                }
-                
-                self.viewModel.loadPhotos(coordinator: nav)
-            } else {
-                for sm in nav.arrSelectedModels {
-                    let isDelete = changeInstance.changeDetails(for: sm.asset)?.objectWasDeleted ?? false
-                    if isDelete {
-                        nav.arrSelectedModels.removeAll { $0 == sm }
-                    }
-                }
-                self.viewModel.albumList.models.removeAll()
-                self.viewModel.loadPhotos(coordinator: nav)
-            }
-            self.resetBottomToolBtnStatus()
-        }
+        guard let nav = self.navigationController as? ImageNavViewController else { return }
+        viewModel.photoLibraryDidChange(changeInstance: changeInstance, navController: nav)
     }
 }
 
@@ -521,7 +418,20 @@ extension PhotoPickerViewController {
     }
     
     private func showPermissionAlert() {
-        let alert = UIAlertController(title: "提示", message: "请在“设置-隐私”选项中\n允许使用相机权限", preferredStyle: .alert)
+//        AlertViewController.showAlert("提示".localString,
+//                                      message: "请在“设置-隐私”选项中\n允许使用相机权限".localString,
+//                                      showCheckout: false,
+//                                      firstButtonTitle: "取消".localString,
+//                                      secondButtonTitle: "去开启".localString,
+//                                      actionButtonColor: .COLOR_5A90FB,
+//                                      opacity: 0.3 ) { [weak self] (_, index: Int) in
+//            guard let self = self else { return }
+//            if index == 1 {
+//                jumpToAppSettingPage()
+//            }
+//        }
+        
+        let alert = UIAlertController(title: "提示", message: "请在iOS的\"设置-隐私\"选项中允许照片-读取和写入。", preferredStyle: .alert)
         let action = UIAlertAction(title: "去开启", style: .default) { _ in
             jumpToAppSettingPage()
         }
@@ -561,40 +471,8 @@ extension PhotoPickerViewController {
     
     /// 刷新相册列表 和底部视图
     func handleDataArray(newModel: PhotoModel) {
-        self.hasTakeANewAsset = true
-        self.viewModel.albumList.refreshResult()
-        
-        let nav = self.navigationController as? ImageNavViewController
-        var insertIndex = 0
-        
-        if viewModel.photoConfig.sortAscending {
-            insertIndex = self.viewModel.arrDataSources.count
-            self.viewModel.arrDataSources.append(newModel)
-        } else {
-            // 保存拍照的照片或者视频，说明肯定有camera cell
-            insertIndex = self.offset
-            self.viewModel.arrDataSources.insert(newModel, at: 0)
-        }
-        
-        var canSelect = true
-        // If mixed selection is not allowed, and the newModel type is video, it will not be selected.
-        if !viewModel.photoConfig.allowPickingMultipleVideo, newModel.type == .video {
-            canSelect = false
-        }
-        if canSelect, canAddModel(newModel, photoConfig: viewModel.photoConfig, currentSelectCount: nav?.arrSelectedModels.count ?? 0, sender: self, showAlert: false) {
-            newModel.isSelected = true
-            nav?.arrSelectedModels.append(newModel)
-        }
-        
-        let insertIndexPath = IndexPath(row: insertIndex, section: 0)
-        self.collectionView.performBatchUpdates({
-            self.collectionView.insertItems(at: [insertIndexPath])
-        }) { (_) in
-            self.collectionView.scrollToItem(at: insertIndexPath, at: .centeredVertically, animated: true)
-            self.collectionView.reloadItems(at: self.collectionView.indexPathsForVisibleItems)
-        }
-        
-        self.resetBottomToolBtnStatus()
+        guard let nav = self.navigationController as? ImageNavViewController else { return }
+        viewModel.handleDataArray(newModel: newModel, collectionView: self.collectionView, navController: nav, sender: self, offset: offset)
     }
 }
 
@@ -612,5 +490,30 @@ extension PhotoPickerViewController: PhotoPickerViewModelDelegate {
     func reloadData() {
         self.collectionView.reloadData()
         self.scrollToBottom()
+    }
+    
+    func showEditImageVC(image: UIImage, model: PhotoModel, cell: AssetCell) {
+        let nav = self.navigationController as! ImageNavViewController
+        let clipImageController = ClipImageViewController(model: model, image: image)
+        clipImageController.imageClipBlock = { image in
+            guard let block = nav.selectImageBlock else { return }
+            let model = SelectAssetModel()
+            model.photo = image
+            block([model], nav.isSelectedOriginal)
+        }
+        self.show(clipImageController, sender: nil)
+    }
+    
+    func showPhotoPreviewController(photos: [PhotoModel], photoConfig: PhotoConfiguration, index: Int) {
+        let previewController = PhotoPreviewController(photos: photos, photoConfig: photoConfig, index: index)
+        self.show(previewController, sender: nil)
+    }
+    
+    func readytoReturn() {
+        self.doneBtnClick()
+    }
+    
+    func refreshBottomTool() {
+        self.resetBottomToolBtnStatus()
     }
 }

@@ -11,11 +11,30 @@ import UIKit
 typealias PhotoCompletionHandler = (() -> Void)
 typealias PhotoCompletionObjectHandler<R> = ((R) -> Void)
 
-let kScreenWidth: CGFloat = UIScreen.main.bounds.size.width
-let kScreenHeight: CGFloat = UIScreen.main.bounds.size.height
-let kScreenScale: CGFloat = UIScreen.main.scale
+struct PhotoEnvironment {
+    static let layout = PhotoLayout()
+    static let device = Phone()
+    
+    struct PhotoLayout {
+         let thumbCollectionViewItemSpacing: CGFloat = 10
+         let thumbCollectionViewLineSpacing: CGFloat = 10
+         let thumbCollectionViewFlowLayoutSectionInset: CGFloat = 10
+        
+         let previewCollectionViewHeight: CGFloat = 100
+         let previcewCollectionItemSpacing: CGFloat = 40
+    }
+    
+    struct Phone {
+        private static let screen = UIScreen.main
+
+        let kScreenWidth: CGFloat = screen.bounds.size.width
+        let kScreenHeight: CGFloat = screen.bounds.size.height
+        let kScreenScale: CGFloat = screen.scale
+    }
+}
+
 func kIs_iphoneX() -> Bool {
-  return kScreenWidth >= 375 && kScreenHeight >= 812
+    return PhotoEnvironment.device.kScreenWidth >= 375 && PhotoEnvironment.device.kScreenHeight >= 812
 }
 
 let kStatusBarHeight: CGFloat = kIs_iphoneX() ? 44.0 : 20
@@ -23,14 +42,6 @@ let kNavHeight = kStatusBarHeight + 44.0
 let kSafeBottomHeight: CGFloat = kIs_iphoneX() ? 34.0 : 0
 let kTabBarHeight: CGFloat = kSafeBottomHeight + 49
 
-struct PhotoLayout {
-    static let thumbCollectionViewItemSpacing: CGFloat = 10
-    static let thumbCollectionViewLineSpacing: CGFloat = 10
-    static let thumbCollectionViewFlowLayoutSectionInset: CGFloat = 10
-    
-    static let previewCollectionViewHeight: CGFloat = 100
-    static let previcewCollectionItemSpacing: CGFloat = 40
-}
 
 func RGB(_ red: CGFloat, _ green: CGFloat, _ blue: CGFloat) -> UIColor {
     return UIColor(red: red / 255, green: green / 255, blue: blue / 255, alpha: 1)
@@ -59,27 +70,19 @@ func checkSelected(source: inout [PhotoModel], selected: inout [PhotoModel]) {
     }
 }
 
-func getSpringAnimation() -> CAKeyframeAnimation {
-    let animate = CAKeyframeAnimation(keyPath: "transform")
-    animate.duration = 0.5
-    animate.isRemovedOnCompletion = true
-    animate.fillMode = .forwards
-    
-    animate.values = [
-        CATransform3DMakeScale(0.7, 0.7, 1),
-        CATransform3DMakeScale(1.2, 1.2, 1),
-        CATransform3DMakeScale(0.8, 0.8, 1),
-        CATransform3DMakeScale(1, 1, 1)
-    ]
-    return animate
-}
-
 func showAlertView(_ message: String, _ sender: UIViewController?) {
-    let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
-    let action = UIAlertAction(title: "确定", style: .default, handler: nil)
-    alert.addAction(action)
-    (sender ?? UIViewController.currentViewController())?.present(alert, animated: true, completion: nil)
-//    ?.showDetailViewController(alert, sender: nil)
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        let action = UIAlertAction(title: "确定", style: .default, handler: nil)
+        alert.addAction(action)
+        (sender ?? UIViewController.currentViewController())?.present(alert, animated: true, completion: nil)
+    
+//    AlertViewController.showAlert(message: message.localString,
+//                                  showCheckout: false,
+//                                  firstButtonTitle: nil,
+//                                  secondButtonTitle: "确定".localString,
+//                                  actionButtonColor: .COLOR_5A90FB,
+//                                  opacity: 0.3 ) {(_, _) in
+//    }
 }
 
 func canAddModel(_ model: PhotoModel, photoConfig: PhotoConfiguration, currentSelectCount: Int, sender: UIViewController?, showAlert: Bool = true) -> Bool {
@@ -120,6 +123,7 @@ func jumpToAppSettingPage() {
         UIApplication.shared.open(url, completionHandler: nil)
     }
 }
+
 func getImage(_ named: String) -> UIImage? {
     return UIImage(named: named, in: Bundle.normal_module, compatibleWith: nil)
 }

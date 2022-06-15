@@ -1,7 +1,6 @@
 import UIKit
 
 class WeakProxy: NSObject {
-
     private weak var target: NSObjectProtocol?
     
     init(target: NSObjectProtocol) {
@@ -10,7 +9,7 @@ class WeakProxy: NSObject {
     }
     
     class func proxy(withTarget target: NSObjectProtocol) -> WeakProxy {
-        return WeakProxy.init(target: target)
+        return WeakProxy(target: target)
     }
     
     override func forwardingTarget(for aSelector: Selector!) -> Any? {
@@ -20,5 +19,4 @@ class WeakProxy: NSObject {
     override func responds(to aSelector: Selector!) -> Bool {
         return target?.responds(to: aSelector) ?? false
     }
-    
 }

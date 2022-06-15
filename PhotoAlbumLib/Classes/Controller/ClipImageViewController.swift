@@ -10,8 +10,8 @@ import UIKit
 class ClipImageViewController: UIViewController {
     private let bottomToolViewH: CGFloat = 90
     private let clipRatioItemSize: CGSize = CGSize(width: 60, height: 70)
-    private let model: PhotoModel?
-    private var editImage = UIImage()
+    private let model: PhotoModel
+    private var editImage: UIImage
     private let originalImage: UIImage
     /// 用作进入裁剪界面首次动画frame
     var presentAnimateFrame: CGRect?
@@ -48,9 +48,9 @@ class ClipImageViewController: UIViewController {
     private lazy var maxClipFrame: CGRect = {
         var rect = CGRect.zero
         rect.origin.x = 15
-        rect.origin.y = kStatusBarHeight
+        rect.origin.y = kNavHeight
         rect.size.width = UIScreen.main.bounds.width - 15 * 2
-        rect.size.height = UIScreen.main.bounds.height - kStatusBarHeight - bottomToolViewH - clipRatioItemSize.height - 25
+        rect.size.height = UIScreen.main.bounds.height - kNavHeight - bottomToolViewH - clipRatioItemSize.height - 25
         return rect
     }()
     
@@ -241,11 +241,15 @@ class ClipImageViewController: UIViewController {
             offset.x = -floor((self.scrollView.frame.width - scaledSize.width) / 2)
             offset.y = -floor((self.scrollView.frame.height - scaledSize.height) / 2)
             self.scrollView.contentOffset = offset
+            return
         }
         
         // edit rect 相对 image size 的 偏移量
-        let diffX = self.editRect.origin.x / self.editImage.size.width * self.scrollView.contentSize.width
-        let diffY = self.editRect.origin.y / self.editImage.size.height * self.scrollView.contentSize.height
+//        let diffX = self.editRect.origin.x / self.editImage.size.width * self.scrollView.contentSize.width
+//        let diffY = self.editRect.origin.y / self.editImage.size.height * self.scrollView.contentSize.height
+        
+        let diffX = (self.scrollView.contentSize.width - self.clipBoxFrame.width) / 2
+        let diffY = (self.scrollView.contentSize.height - self.clipBoxFrame.height) / 2
         self.scrollView.contentOffset = CGPoint(x: -self.scrollView.contentInset.left + diffX, y: -self.scrollView.contentInset.top + diffY)
     }
     
@@ -257,7 +261,7 @@ class ClipImageViewController: UIViewController {
             return
         }
         var frame = newFrame
-        frame = CGRect(x: 15, y: (kScreenHeight - (kScreenWidth - 30)) / 2, width: (kScreenWidth - 30), height: (kScreenWidth - 30))
+        frame = CGRect(x: 15, y: (PhotoEnvironment.device.kScreenHeight - (PhotoEnvironment.device.kScreenWidth - 30)) / 2, width: (PhotoEnvironment.device.kScreenWidth - 30), height: (PhotoEnvironment.device.kScreenWidth - 30))
         let originX = ceil(self.maxClipFrame.minX)
         let diffX = frame.minX - originX
         frame.origin.x = max(frame.minX, originX)
@@ -292,7 +296,7 @@ class ClipImageViewController: UIViewController {
         self.dismissAnimateFromRect = self.cancelClipAnimateFrame
         self.dismissAnimateImage = self.presentAnimateImage
         self.cancelClipBlock?()
-        self.navigationController?.dismiss(animated: true, completion: nil)
+        self.navigationController?.popViewController(animated: true)
     }
 
     @objc func doneBtnClick() {
