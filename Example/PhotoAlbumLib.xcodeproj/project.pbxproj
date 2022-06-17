@@ -46,7 +46,7 @@
 		607FACEB1AFB9204008FA782 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		82746B394AD9A20E9303275C /* Pods_PhotoAlbumLib_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PhotoAlbumLib_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		98DD5AC106047335C1899F75 /* Pods-PhotoAlbumLib_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PhotoAlbumLib_Example.debug.xcconfig"; path = "Target Support Files/Pods-PhotoAlbumLib_Example/Pods-PhotoAlbumLib_Example.debug.xcconfig"; sourceTree = "<group>"; };
-		A3FACA7142C418807D89A783 /* PhotoAlbumLib.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = PhotoAlbumLib.podspec; path = ../PhotoAlbumLib.podspec; sourceTree = "<group>"; };
+		A3FACA7142C418807D89A783 /* PhotoAlbumLib.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = PhotoAlbumLib.podspec; path = ../PhotoAlbumLib.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

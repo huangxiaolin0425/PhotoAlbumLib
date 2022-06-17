@@ -109,7 +109,10 @@ extension PhotoAlbumManager {
     public static func fetchImage(for asset: PHAsset, size: CGSize, progress: ( (CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void )? = nil, completion: @escaping ( (UIImage?, Bool) -> Void )) -> PHImageRequestID {
         return self.fetchImage(for: asset, size: size, resizeMode: .fast, progress: progress, completion: completion)
     }
-    /// Fetch the original image
+    
+    /// 获取相册原数据 ⚠️此回调会根据系统原则可能会调用两次，第一次为默认展示小图，第二次才是原始大图
+    /// - Parameters:
+    ///   - completion: Bool isDegraded 是否为缩减图，使用者可在外部自行判断
     @discardableResult
     public static func fetchOriginalImage(for asset: PHAsset, progress: ( (CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void )? = nil, completion: @escaping ( (UIImage?, Bool) -> Void)) -> PHImageRequestID {
         return self.fetchImage(for: asset, size: PHImageManagerMaximumSize, resizeMode: .fast, progress: progress, completion: completion)
