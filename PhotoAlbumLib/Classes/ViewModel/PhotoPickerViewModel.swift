@@ -102,7 +102,7 @@ class PhotoPickerViewModel {
                     }
                 }
             }
-        } else if photoConfig.maxImagesCount == 1, (model.type == .image || model.type == .livePhoto) {
+        } else if photoConfig.maxImagesCount == 1 {
             if photoConfig.didSelectImageDirectreturn == true, photoConfig.allowPreviewPhotos == false {
                 // 直接返回选中的图片
                 navController.arrSelectedModels.append(model)
